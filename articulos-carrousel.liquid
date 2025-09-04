@@ -1,0 +1,404 @@
+{% comment %}
+  seccion-blog-carrusel-manual.liquid
+
+  Esta sección crea un carrusel de artículos de blog donde cada
+  artículo se agrega manualmente como un bloque en el editor visual.
+{% endcomment %}
+
+<style>
+  .blog-carousel-section {
+    padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    background-color: {{ section.settings.background_color }};
+    color: {{ section.settings.text_color }};
+  }
+
+  .blog-carousel-container {
+    max-width: {{ section.settings.max_width }}px;
+    margin: 0 auto;
+    position: relative;
+    padding: 20px;
+  }
+
+  .blog-carousel {
+    display: flex;
+    overflow: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    gap: {{ section.settings.gap_size }}px;
+  }
+
+  .blog-item {
+    /* Ajusta el ancho de los elementos según los settings */
+    flex: 0 0 calc(100% / {{ section.settings.items_desktop }} - {{ section.settings.gap_size }}px);
+    min-width: calc(100% / {{ section.settings.items_desktop }} - {{ section.settings.gap_size }}px);
+    scroll-snap-align: start;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .blog-item:hover {
+    transform: translateY(-5px);
+  }
+
+  .blog-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .blog-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 15px;
+  }
+
+  .blog-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .blog-title {
+    font-size: {{ section.settings.title_font_size }}px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .blog-summary {
+    font-size: {{ section.settings.summary_font_size }}px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    color: #555;
+    flex-grow: 1;
+  }
+
+  .carousel-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 10;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 1.2em;
+    line-height: 1;
+  }
+
+  .carousel-button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  .carousel-button-prev {
+    left: 10px;
+  }
+
+  .carousel-button-next {
+    right: 10px;
+  }
+
+  @media (max-width: 991px) {
+    .blog-item {
+      flex: 0 0 calc(100% / {{ section.settings.items_tablet }} - {{ section.settings.gap_size }}px);
+      min-width: calc(100% / {{ section.settings.items_tablet }} - {{ section.settings.gap_size }}px);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .blog-carousel-container {
+      padding: 0 40px;
+    }
+
+    .carousel-button {
+      width: 30px;
+      height: 30px;
+      font-size: 1em;
+    }
+
+    .carousel-button-prev {
+      left: 5px;
+    }
+
+    .carousel-button-next {
+      right: 5px;
+    }
+
+    .blog-item {
+      flex: 0 0 calc(100% / {{ section.settings.items_mobile }} - {{ section.settings.gap_size }}px);
+      min-width: calc(100% / {{ section.settings.items_mobile }} - {{ section.settings.gap_size }}px);
+    }
+  }
+</style>
+
+<div class="blog-carousel-section">
+  <div class="blog-carousel-container">
+    <button class="carousel-button carousel-button-prev">&#10094;</button>
+    <div class="blog-carousel" id="blog-carousel-{{ section.id }}">
+      {% for block in section.blocks %}
+        {% if block.type == 'articulo' %}
+          <div class="blog-item">
+            <a href="{{ block.settings.url_articulo }}" class="blog-link">
+              {% if block.settings.imagen_articulo != blank %}
+                <div class="blog-image">
+                  <img src="{{ block.settings.imagen_articulo | image_url: width: 600 }}" alt="{{ block.settings.titulo_articulo }}">
+                </div>
+              {% endif %}
+              <div class="blog-content">
+                <h3 class="blog-title">{{ block.settings.titulo_articulo }}</h3>
+                <p class="blog-summary">{{ block.settings.resumen_articulo }}</p>
+              </div>
+            </a>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <button class="carousel-button carousel-button-next">&#10095;</button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const carouselContainer = document.getElementById('blog-carousel-{{ section.id }}');
+    if (!carouselContainer) return;
+
+    const prevButton = carouselContainer.parentElement.querySelector('.carousel-button-prev');
+    const nextButton = carouselContainer.parentElement.querySelector('.carousel-button-next');
+    const firstBlogItem = carouselContainer.querySelector('.blog-item');
+    if (!firstBlogItem) return;
+
+    const scrollAmount = firstBlogItem.offsetWidth;
+    const gapSize = {{ section.settings.gap_size }};
+    const scrollTime = {{ section.settings.carousel_interval | times: 1000 }};
+    let autoScrollInterval;
+
+    const scrollNext = () => {
+      carouselContainer.scrollBy({
+        left: scrollAmount + gapSize,
+        behavior: 'smooth'
+      });
+      if (carouselContainer.scrollLeft + carouselContainer.offsetWidth >= carouselContainer.scrollWidth) {
+        carouselContainer.scrollTo({
+          left: 0,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    const scrollPrev = () => {
+      carouselContainer.scrollBy({
+        left: -(scrollAmount + gapSize),
+        behavior: 'smooth'
+      });
+    };
+
+    const startAutoScroll = () => {
+      if (scrollTime > 0) {
+        autoScrollInterval = setInterval(scrollNext, scrollTime);
+      }
+    };
+
+    const stopAutoScroll = () => {
+      clearInterval(autoScrollInterval);
+    };
+
+    prevButton.addEventListener('click', () => {
+      stopAutoScroll();
+      scrollPrev();
+      startAutoScroll();
+    });
+
+    nextButton.addEventListener('click', () => {
+      stopAutoScroll();
+      scrollNext();
+      startAutoScroll();
+    });
+
+    carouselContainer.addEventListener('mouseenter', stopAutoScroll);
+    carouselContainer.addEventListener('mouseleave', startAutoScroll);
+
+    startAutoScroll();
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Carrusel de Artículos",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Estilos de Sección"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Color de Fondo",
+      "default": "#f0f2f5"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Color de Texto",
+      "default": "#333333"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "min": 600,
+      "max": 1400,
+      "step": 50,
+      "unit": "px",
+      "label": "Ancho Máximo del Contenedor",
+      "default": 1000
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Espaciado Superior (Padding)",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Espaciado Inferior (Padding)",
+      "default": 50
+    },
+    {
+      "type": "header",
+      "content": "Configuración del Carrusel"
+    },
+    {
+      "type": "range",
+      "id": "items_desktop",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "label": "Artículos por vista (Desktop)",
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "items_tablet",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "label": "Artículos por vista (Tablet)",
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "items_mobile",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "label": "Artículos por vista (Mobile)",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "gap_size",
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "unit": "px",
+      "label": "Espacio entre artículos",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "carousel_interval",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "label": "Tiempo de Transición Automática",
+      "info": "0 para deshabilitar el avance automático.",
+      "default": 5
+    }
+  ],
+  "blocks": [
+    {
+      "type": "articulo",
+      "name": "Artículo de Blog",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "imagen_articulo",
+          "label": "Imagen del Artículo"
+        },
+        {
+          "type": "text",
+          "id": "titulo_articulo",
+          "label": "Título del Artículo",
+          "default": "Título de Ejemplo"
+        },
+        {
+          "type": "textarea",
+          "id": "resumen_articulo",
+          "label": "Resumen del Artículo",
+          "default": "Este es un resumen del artículo. Sirve para dar una idea general del contenido."
+        },
+        {
+          "type": "text",
+          "id": "autor_articulo",
+          "label": "Autor del Artículo",
+          "default": "Nombre del Autor"
+        },
+        {
+          "type": "url",
+          "id": "url_articulo",
+          "label": "Enlace del Artículo",
+          "info": "El enlace a la página del artículo completo."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Carrusel de Blog Manual",
+      "category": "Blog",
+      "blocks": [
+        {
+          "type": "articulo"
+        },
+        {
+          "type": "articulo"
+        },
+        {
+          "type": "articulo"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

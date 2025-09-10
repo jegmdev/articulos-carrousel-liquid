@@ -120,6 +120,14 @@
     right: 10px;
   }
 
+  .section-categories__heading {
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 40px;
+    color: #333;
+    text-align: center;
+  }
+
   @media (max-width: 991px) {
     .blog-item {
       flex: 0 0 calc(100% / {{ section.settings.items_tablet }} - {{ section.settings.gap_size }}px);
@@ -154,6 +162,9 @@
 </style>
 
 <div class="blog-carousel-section">
+  {% if section.settings.title != blank %}
+    <h2 class="section-categories__heading">{{ section.settings.title }}</h2>
+  {% endif %}
   <div class="blog-carousel-container">
     <button class="carousel-button carousel-button-prev">&#10094;</button>
     <div class="blog-carousel" id="blog-carousel-{{ section.id }}">
@@ -247,6 +258,12 @@
 {
   "name": "Carrusel de Artículos",
   "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Título de la sección",
+      "default": "ÚLTIMOS ARTÍCULOS"
+    },
     {
       "type": "header",
       "content": "Estilos de Sección"

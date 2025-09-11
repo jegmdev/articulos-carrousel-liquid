@@ -1,17 +1,24 @@
 {% comment %}
-  seccion-blog-carrusel-manual.liquid
-
-  Esta sección crea un carrusel de artículos de blog donde cada
-  artículo se agrega manualmente como un bloque en el editor visual.
+  ============================================================
+  Sección: Carrusel de Artículos de Blog Automático
+  - Muestra un carrusel de artículos de un blog seleccionado
+  - Los artículos se cargan automáticamente sin necesidad de bloques manuales.
+  ============================================================
 {% endcomment %}
 
 <style>
+  /*
+    ============================================================
+    Estilos CSS para la sección
+    ============================================================
+  */
   .blog-carousel-section {
     padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px 0;
     padding-left: 10px;
     padding-right: 10px;
     background-color: {{ section.settings.background_color }};
     color: {{ section.settings.text_color }};
+    height: auto;
   }
 
   .blog-carousel-container {
@@ -19,6 +26,7 @@
     margin: 0 auto;
     position: relative;
     padding: 20px;
+    height: auto;
   }
 
   .blog-carousel {
@@ -42,7 +50,7 @@
     flex-direction: column;
     background: #fff;
     border-radius: 5px;
-    box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 4px 4px 4px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
   }
 
@@ -137,7 +145,7 @@
 
   @media (max-width: 768px) {
     .blog-carousel-container {
-      padding: 0 40px;
+      padding: 40px;
     }
 
     .carousel-button {
@@ -162,29 +170,32 @@
 </style>
 
 <div class="blog-carousel-section">
+  {%- assign blog = blogs[section.settings.blog_handle] -%}
   {% if section.settings.title != blank %}
     <h2 class="section-categories__heading">{{ section.settings.title }}</h2>
   {% endif %}
   <div class="blog-carousel-container">
     <button class="carousel-button carousel-button-prev">&#10094;</button>
     <div class="blog-carousel" id="blog-carousel-{{ section.id }}">
-      {% for block in section.blocks %}
-        {% if block.type == 'articulo' %}
+      {% if blog != blank %}
+        {% for article in blog.articles %}
           <div class="blog-item">
-            <a href="{{ block.settings.url_articulo }}" class="blog-link">
-              {% if block.settings.imagen_articulo != blank %}
+            <a href="{{ article.url }}" class="blog-link">
+              {% if article.image != blank %}
                 <div class="blog-image">
-                  <img src="{{ block.settings.imagen_articulo | image_url: width: 600 }}" alt="{{ block.settings.titulo_articulo }}">
+                  <img src="{{ article.image | image_url: width: 600 }}" alt="{{ article.title }}">
                 </div>
               {% endif %}
               <div class="blog-content">
-                <h3 class="blog-title">{{ block.settings.titulo_articulo }}</h3>
-                <p class="blog-summary">{{ block.settings.resumen_articulo }}</p>
+                <h3 class="blog-title">{{ article.title }}</h3>
+                <p class="blog-summary">{{ article.excerpt }}</p>
               </div>
             </a>
           </div>
-        {% endif %}
-      {% endfor %}
+        {% endfor %}
+      {% else %}
+        <p>Por favor, selecciona un blog para mostrar los artículos.</p>
+      {% endif %}
     </div>
     <button class="carousel-button carousel-button-next">&#10095;</button>
   </div>
@@ -263,6 +274,12 @@
       "id": "title",
       "label": "Título de la sección",
       "default": "ÚLTIMOS ARTÍCULOS"
+    },
+    {
+      "type": "blog",
+      "id": "blog_handle",
+      "label": "Selecciona un Blog",
+      "info": "Los artículos de este blog se mostrarán automáticamente en el carrusel."
     },
     {
       "type": "header",
@@ -363,58 +380,10 @@
       "default": 5
     }
   ],
-  "blocks": [
-    {
-      "type": "articulo",
-      "name": "Artículo de Blog",
-      "settings": [
-        {
-          "type": "image_picker",
-          "id": "imagen_articulo",
-          "label": "Imagen del Artículo"
-        },
-        {
-          "type": "text",
-          "id": "titulo_articulo",
-          "label": "Título del Artículo",
-          "default": "Título de Ejemplo"
-        },
-        {
-          "type": "textarea",
-          "id": "resumen_articulo",
-          "label": "Resumen del Artículo",
-          "default": "Este es un resumen del artículo. Sirve para dar una idea general del contenido."
-        },
-        {
-          "type": "text",
-          "id": "autor_articulo",
-          "label": "Autor del Artículo",
-          "default": "Nombre del Autor"
-        },
-        {
-          "type": "url",
-          "id": "url_articulo",
-          "label": "Enlace del Artículo",
-          "info": "El enlace a la página del artículo completo."
-        }
-      ]
-    }
-  ],
   "presets": [
     {
-      "name": "Carrusel de Blog Manual",
-      "category": "Blog",
-      "blocks": [
-        {
-          "type": "articulo"
-        },
-        {
-          "type": "articulo"
-        },
-        {
-          "type": "articulo"
-        }
-      ]
+      "name": "Carrusel de Blog Automático",
+      "category": "Blog"
     }
   ]
 }
